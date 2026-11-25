@@ -9,7 +9,7 @@
 // this function tries current models in order and uses the first one
 // that answers — a future retirement will not break the site again.
 
-const MODELS = ['gemini-3.8-flash', 'gemini-2.5-flash', 'gemini-2.5-flash-lite'];
+const MODELS = ['gemini-3.5-flash-lite', 'gemini-3.8-flash', 'gemini-3.5-flash', 'gemini-2.5-flash'];
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
