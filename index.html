@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TeachBack AI — Explain It, AI Checks What You Really Understood</title>
+<meta name="description" content="Free AI study tool based on the Feynman Technique. Explain any topic in your own words — AI scores your understanding, finds your gaps, and asks follow-up questions.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root { --ink:#171a2b; --muted:#5b6178; --vio:#6C4CF1; --vio2:#9D6BF5; --teal:#0E7A6D; --green:#1d9e62; --amber:#e8a13a; --red:#d64545; }
+  body { font-family: 'Inter', 'Segoe UI', Arial, sans-serif; background: #f6f5fc; color: var(--ink); }
+  h1,h2,h3,.brand { font-family: 'Poppins', 'Segoe UI', sans-serif; }
+  nav { display:flex; align-items:center; justify-content:space-between; padding: 16px 22px; max-width: 1080px; margin: 0 auto; }
+  .brand { font-size: 22px; font-weight: 800; color: var(--ink); }
+  .brand span { background: linear-gradient(90deg, var(--vio), var(--vio2)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .pill { background:#fff; border:1.5px solid #e3defa; color: var(--vio); font-weight:600; font-size:13px; padding:7px 14px; border-radius:999px; }
+  .hero { text-align:center; padding: 34px 18px 10px; max-width: 820px; margin: 0 auto; }
+  .hero h1 { font-size: clamp(30px, 5.4vw, 50px); font-weight: 800; line-height: 1.14; }
+  .hero h1 .grad { background: linear-gradient(90deg, var(--vio), var(--vio2), var(--teal)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .hero p { margin: 16px auto 0; font-size: 17px; color: var(--muted); max-width: 620px; line-height: 1.6; }
+  .hero .cta { margin-top: 22px; display:inline-block; background: linear-gradient(90deg, var(--vio), var(--vio2)); color:#fff; font-weight:700; font-size:16px; padding: 14px 30px; border-radius: 999px; text-decoration:none; box-shadow: 0 10px 24px rgba(108,76,241,.35); }
+  .steps { display:flex; gap:12px; justify-content:center; flex-wrap:wrap; margin: 30px auto 4px; max-width: 900px; padding: 0 16px; }
+  .step { background:#fff; border-radius: 14px; padding: 14px 18px; flex:1; min-width: 210px; box-shadow: 0 3px 12px rgba(30,25,80,.07); text-align:left; }
+  .step .n { font-size: 22px; }
+  .step b { display:block; margin: 6px 0 3px; font-size: 15px; }
+  .step span { font-size: 13.5px; color: var(--muted); line-height: 1.45; display:block; }
+  .wrap { max-width: 880px; margin: 0 auto; padding: 14px 16px 56px; }
+  .card { background:#fff; border-radius: 18px; padding: 24px; margin-top: 20px; box-shadow: 0 6px 22px rgba(30,25,80,.08); }
+  .card h2 { font-size: 20px; margin-bottom: 6px; }
+  .card .sub { font-size: 14px; color: var(--muted); margin-bottom: 8px; line-height: 1.55; }
+  label { font-weight: 600; font-size: 14px; display:block; margin: 14px 0 6px; }
+  textarea, input[type=text], input[type=password], select { width:100%; padding: 12px; border: 1.5px solid #ddd8f2; border-radius: 11px; font-size: 15px; font-family: inherit; background:#fcfbff; }
+  textarea:focus, input:focus, select:focus { outline: 2px solid var(--vio); border-color: transparent; }
+  textarea { min-height: 120px; resize: vertical; }
+  #explain { min-height: 150px; }
+  .btn { border:none; cursor:pointer; font-weight:700; border-radius: 12px; font-size: 16px; padding: 14px 22px; width:100%; margin-top: 16px; color:#fff; background: linear-gradient(90deg, var(--vio), var(--vio2)); box-shadow: 0 8px 20px rgba(108,76,241,.3); }
+  .btn:hover { filter: brightness(1.06); }
+  .btn:disabled { opacity:.6; cursor: wait; }
+  .btn.ghost { background:#f0edfd; color: var(--vio); box-shadow:none; }
+  .btn.mic { background:#fff; color: var(--ink); border:1.5px solid #ddd8f2; box-shadow:none; width:auto; padding: 10px 18px; font-size: 14px; margin-top: 10px; }
+  .btn.mic.rec { background:#fdeaea; border-color: var(--red); color: var(--red); }
+  .hint { font-size: 13px; color: var(--muted); margin-top: 7px; line-height: 1.5; }
+  .hint a { color: var(--vio); font-weight: 600; }
+  .err { background:#fdeaea; color:#8f2020; padding: 12px 14px; border-radius: 10px; margin-top: 14px; display:none; font-size: 14px; }
+  .hidden { display:none; }
+  .scorewrap { display:flex; gap: 22px; align-items:center; flex-wrap:wrap; }
+  .ringbox { position: relative; width: 132px; height: 132px; flex: none; }
+  .ringbox svg { transform: rotate(-90deg); }
+  .ringnum { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+  .ringnum b { font-size: 32px; font-family:'Poppins'; }
+  .ringnum span { font-size: 11.5px; color: var(--muted); font-weight:600; letter-spacing:.4px; }
+  .verdict { font-size: 17px; font-weight: 600; line-height: 1.55; }
+  .cols { display:grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 14px; margin-top: 18px; }
+  .col { border-radius: 14px; padding: 16px; }
+  .col h3 { font-size: 15px; margin-bottom: 9px; }
+  .col ul { padding-left: 18px; font-size: 14px; line-height: 1.6; }
+  .col.good { background:#eafaf1; } .col.good h3 { color: var(--green); }
+  .col.gap { background:#fdf3e0; } .col.gap h3 { color: #b97a14; }
+  .col.wrong { background:#fdeaea; } .col.wrong h3 { color: var(--red); }
+  .fq { border: 1.5px solid #e6e1fa; border-radius: 12px; padding: 15px; margin-top: 12px; }
+  .fq .q { font-weight: 700; font-size: 15px; }
+  .fq .a { display:none; margin-top: 9px; font-size: 14px; background:#f4f1fe; border-left: 4px solid var(--vio); padding: 9px 12px; border-radius: 6px; line-height: 1.55; }
+  .fq button { margin-top: 10px; background:#f0edfd; color: var(--vio); border:none; font-weight:700; padding: 8px 14px; border-radius: 8px; cursor:pointer; font-size: 13.5px; }
+  .hist { margin-top: 6px; }
+  .hist .row { display:flex; justify-content:space-between; align-items:center; padding: 11px 4px; border-bottom: 1px solid #eeeaf9; font-size: 14.5px; }
+  .hist .sc { font-weight: 800; font-family:'Poppins'; }
+  .badge { font-size: 11.5px; font-weight: 700; padding: 3px 9px; border-radius: 999px; color:#fff; }
+  footer { text-align:center; padding: 8px 16px 44px; color: var(--muted); font-size: 14px; }
+  footer a { color: var(--vio); font-weight: 600; margin: 0 8px; cursor: pointer; }
+  .modal { display:none; position:fixed; inset:0; background: rgba(12,10,30,.55); z-index: 50; }
+  .modal .box { background:#fff; max-width: 640px; margin: 6vh auto; border-radius: 16px; padding: 26px; max-height: 84vh; overflow:auto; }
+  .modal h3 { margin-bottom: 10px; }
+  .modal p { margin-bottom: 10px; font-size: 14.5px; line-height: 1.6; color:#333950; }
+  .close { float:right; cursor:pointer; font-size: 22px; font-weight: 800; color:#999; }
+</style>
+</head>
+<body>
+<nav>
+  <div class="brand">Teach<span>Back</span> AI</div>
+  <div class="pill">Based on the Feynman Technique</div>
+</nav>
+
+<section class="hero">
+  <h1>If you can <span class="grad">teach it</span>,<br>you truly know it.</h1>
+  <p>Explain any topic in your own words — like you are teaching a friend. Our AI checks your explanation, scores your understanding, shows exactly what you missed, and questions you like a teacher.</p>
+  <a class="cta" href="#tool">Start explaining →</a>
+</section>
+
+<div class="steps">
+  <div class="step"><div class="n">✍️</div><b>1. Explain</b><span>Type or speak the topic in your own simple words — no copy-paste.</span></div>
+  <div class="step"><div class="n">🔍</div><b>2. Get checked</b><span>AI scores you 0–100 and splits your answer into right, missing and wrong points.</span></div>
+  <div class="step"><div class="n">🎯</div><b>3. Fill the gaps</b><span>Answer the follow-up questions, explain again, and watch your score rise.</span></div>
+</div>
+
+<div class="wrap" id="tool">
+
+  <div class="card">
+    <h2>🔑 Your free AI key</h2>
+    <p class="sub">Live site: students need NO key — the key is hidden on the server. Testing this file on your own computer? Paste your own free key here (it stays only in your browser).</p>
+    <input type="password" id="apikey" placeholder="Optional while testing — paste your free Gemini API key here">
+    <p class="hint">Get it free in 2 minutes: <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">Google AI Studio</a> → sign in → "Create API key" → copy &amp; paste here. No key yet? Press <b>Try the Demo</b> below.</p>
+  </div>
+
+  <div class="card">
+    <h2>🗣️ Explain your topic</h2>
+    <p class="sub">Pretend you are teaching this to a classmate who knows nothing. Simple words, your own words.</p>
+    <label for="topic">Topic</label>
+    <input type="text" id="topic" placeholder="e.g. Gram Staining, Photosynthesis, Newton's Third Law">
+    <label for="notes">Your class notes on this topic (optional — but checking becomes exact)</label>
+    <textarea id="notes" placeholder="Paste the correct notes here if you have them. AI will compare your explanation against these notes."></textarea>
+    <label for="explain">Your explanation (in your own words)</label>
+    <textarea id="explain" placeholder="Start explaining... e.g. 'Gram staining is a test that divides bacteria into two groups...'"></textarea>
+    <button class="btn mic" id="micBtn">🎤 Speak instead</button>
+    <select id="micLang" style="width:auto; display:inline-block; padding:9px; margin-left:6px;">
+      <option value="en-US">English</option>
+      <option value="ur-PK">Urdu</option>
+    </select>
+    <button class="btn" id="checkBtn">🔍 Check My Understanding</button>
+    <button class="btn ghost" id="demoBtn">▶ Try the Demo (no key needed)</button>
+    <div class="err" id="errBox"></div>
+  </div>
+
+  <div class="card hidden" id="resultCard">
+    <h2>📊 Your result</h2>
+    <div class="scorewrap">
+      <div class="ringbox">
+        <svg width="132" height="132">
+          <circle cx="66" cy="66" r="58" fill="none" stroke="#eeeaf9" stroke-width="11"/>
+          <circle id="ring" cx="66" cy="66" r="58" fill="none" stroke="#6C4CF1" stroke-width="11" stroke-linecap="round" stroke-dasharray="364.4" stroke-dashoffset="364.4"/>
+        </svg>
+        <div class="ringnum"><b id="scoreNum">0</b><span>UNDERSTOOD</span></div>
+      </div>
+      <div class="verdict" id="verdict"></div>
+    </div>
+    <div class="cols">
+      <div class="col good"><h3>✅ You got right</h3><ul id="listGood"></ul></div>
+      <div class="col gap"><h3>⚠️ You missed</h3><ul id="listGap"></ul></div>
+      <div class="col wrong"><h3>❌ You got wrong</h3><ul id="listWrong"></ul></div>
+    </div>
+    <h3 style="margin-top:22px; font-size:16px;">🎓 Teacher's follow-up questions — try answering, then check</h3>
+    <div id="fqList"></div>
+    <button class="btn" id="againBtn">🔁 Explain Again &amp; Improve My Score</button>
+  </div>
+
+  <div class="card">
+    <h2>📈 Your progress</h2>
+    <p class="sub">Every check is saved here (in your browser) so you can see your understanding grow.</p>
+    <div class="hist" id="histList"><p class="hint">No checks yet — your history will appear here.</p></div>
+  </div>
+
+</div>
+
+<footer>
+  <a onclick="openModal('about')">About</a> •
+  <a onclick="openModal('privacy')">Privacy Policy</a> •
+  <a onclick="openModal('contact')">Contact</a>
+  <p style="margin-top:10px;">© 2026 TeachBack AI — Learn by teaching</p>
+</footer>
+
+<div class="modal" id="modal-about"><div class="box"><span class="close" onclick="closeModal('about')">&times;</span>
+  <h3>About TeachBack AI</h3>
+  <p>TeachBack AI is built on the Feynman Technique — the study method used by top students worldwide: if you can explain a topic in simple words, you truly understand it; where your explanation breaks, your understanding has gaps.</p>
+  <p>Our AI listens to your explanation like a teacher, scores it, and shows you exactly what to fix. It was created by a microbiology student, for students everywhere.</p></div></div>
+
+<div class="modal" id="modal-privacy"><div class="box"><span class="close" onclick="closeModal('privacy')">&times;</span>
+  <h3>Privacy Policy</h3>
+  <p>Your explanation and notes are sent only to the Google Gemini AI service to check your understanding, through a small server step that hides the site's API key. We do not store, sell, or share your text. Your own key (only if you paste one while testing) and your progress history are saved only in your own browser's local storage.</p>
+  <p>This site may use cookies from advertising partners (such as Google AdSense) to show ads. You can disable cookies in your browser settings at any time.</p></div></div>
+
+<div class="modal" id="modal-contact"><div class="box"><span class="close" onclick="closeModal('contact')">&times;</span>
+  <h3>Contact</h3>
+  <p>For feedback, suggestions or issues, email: <b>fakhirjutt5@gmail.com</b></p>
+  <p>We usually reply within 24 hours.</p></div></div>
+
+<script>
+const $ = id => document.getElementById(id);
+const keyInput = $('apikey');
+keyInput.value = localStorage.getItem('tb_key') || '';
+keyInput.addEventListener('change', () => localStorage.setItem('tb_key', keyInput.value.trim()));
+
+function openModal(n) { $('modal-' + n).style.display = 'block'; }
+function closeModal(n) { $('modal-' + n).style.display = 'none'; }
+function showErr(m) { const e = $('errBox'); e.textContent = m; e.style.display = 'block'; }
+function hideErr() { $('errBox').style.display = 'none'; }
+
+const DEMO = {
+  topic: 'Gram Staining',
+  result: {
+    score: 62,
+    verdict: 'Good start! You know the basic idea and the main steps, but the reason behind the colours — the cell wall difference — is missing, and one step is in the wrong order.',
+    understood: ['It divides bacteria into two groups: Gram-positive and Gram-negative', 'Crystal violet is the first (primary) stain', 'Gram-positive bacteria stay purple, Gram-negative turn pink/red'],
+    gaps: ['WHY it works: Gram-positive bacteria have a thick peptidoglycan wall that holds the crystal violet–iodine complex; Gram-negative have a thin wall and an outer membrane', 'The role of iodine (mordant) — it fixes the crystal violet inside the cell', 'Safranin is the counterstain that colours the decolourised Gram-negative cells pink'],
+    wrong: ['You said alcohol is applied before iodine. Correct order: crystal violet → iodine → alcohol (decolouriser) → safranin'],
+    followups: [
+      {q: 'Why do Gram-negative bacteria lose the purple colour when alcohol is applied?', a: 'Alcohol dissolves their outer membrane and the thin peptidoglycan wall cannot hold the crystal violet–iodine complex, so it washes out. Safranin then stains them pink.'},
+      {q: 'What would happen if you forgot the iodine step?', a: 'The crystal violet would not be fixed inside the cells, so it would wash out of BOTH types during decolourisation — everything would end up pink.'},
+      {q: 'A bacterium stays purple after Gram staining. What does that tell you about its cell wall?', a: 'It is Gram-positive: it has a thick peptidoglycan layer (and no outer membrane), which traps the crystal violet–iodine complex.'}
+    ]
+  }
+};
+
+function scoreColor(s) { return s >= 80 ? '#1d9e62' : (s >= 50 ? '#e8a13a' : '#d64545'); }
+
+function renderResult(r, topic) {
+  $('resultCard').classList.remove('hidden');
+  const ring = $('ring'), C = 364.4;
+  ring.style.stroke = scoreColor(r.score);
+  ring.style.transition = 'stroke-dashoffset 1s ease';
+  requestAnimationFrame(() => { ring.style.strokeDashoffset = C - (C * r.score / 100); });
+  $('scoreNum').textContent = r.score;
+  $('scoreNum').style.color = scoreColor(r.score);
+  $('verdict').textContent = r.verdict || '';
+  const fill = (id, arr, emptyText) => {
+    const ul = $(id); ul.innerHTML = '';
+    (arr && arr.length ? arr : [emptyText]).forEach(t => { const li = document.createElement('li'); li.textContent = t; ul.appendChild(li); });
+  };
+  fill('listGood', r.understood, 'Nothing fully correct yet — read the notes once and try again.');
+  fill('listGap', r.gaps, 'No major gaps — complete explanation!');
+  fill('listWrong', r.wrong, 'Nothing wrong — well done!');
+  const fq = $('fqList'); fq.innerHTML = '';
+  (r.followups || []).forEach((f, i) => {
+    const d = document.createElement('div'); d.className = 'fq';
+    const q = document.createElement('div'); q.className = 'q'; q.textContent = (i + 1) + '. ' + f.q; d.appendChild(q);
+    const a = document.createElement('div'); a.className = 'a'; a.textContent = f.a; d.appendChild(a);
+    const b = document.createElement('button'); b.textContent = 'Show answer';
+    b.onclick = () => { a.style.display = a.style.display === 'block' ? 'none' : 'block'; b.textContent = a.style.display === 'block' ? 'Hide answer' : 'Show answer'; };
+    d.appendChild(b); fq.appendChild(d);
+  });
+  $('resultCard').scrollIntoView({ behavior: 'smooth' });
+}
+
+function saveHistory(topic, score) {
+  const h = JSON.parse(localStorage.getItem('tb_history') || '[]');
+  h.unshift({ topic: topic || 'Untitled topic', score: score, date: new Date().toLocaleDateString() });
+  localStorage.setItem('tb_history', JSON.stringify(h.slice(0, 20)));
+  renderHistory();
+}
+function renderHistory() {
+  const h = JSON.parse(localStorage.getItem('tb_history') || '[]');
+  const box = $('histList');
+  if (!h.length) { box.innerHTML = '<p class="hint">No checks yet — your history will appear here.</p>'; return; }
+  box.innerHTML = '';
+  h.forEach(item => {
+    const row = document.createElement('div'); row.className = 'row';
+    const left = document.createElement('span'); left.textContent = item.topic + '  ·  ' + item.date;
+    const sc = document.createElement('span'); sc.className = 'sc'; sc.style.color = scoreColor(item.score); sc.textContent = item.score + '/100';
+    row.appendChild(left); row.appendChild(sc); box.appendChild(row);
+  });
+}
+renderHistory();
+
+$('againBtn').onclick = () => { $('explain').focus(); window.scrollTo({ top: 0, behavior: 'smooth' }); $('tool').scrollIntoView({ behavior: 'smooth' }); };
+
+$('demoBtn').onclick = () => {
+  hideErr();
+  $('topic').value = DEMO.topic;
+  $('explain').value = 'Gram staining is a test that divides bacteria into two groups. First we put crystal violet on the bacteria, then alcohol, then iodine, then safranin. Gram positive bacteria stay purple and gram negative become pink.';
+  renderResult(DEMO.result, DEMO.topic);
+  saveHistory(DEMO.topic + ' (demo)', DEMO.result.score);
+};
+
+// ---- Voice input (Web Speech API, free, built into Chrome) ----
+let recog = null, recording = false;
+$('micBtn').onclick = () => {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) { showErr('Voice input works in Google Chrome. Please type your explanation instead.'); return; }
+  if (recording) { recog.stop(); return; }
+  recog = new SR();
+  recog.lang = $('micLang').value; recog.interimResults = false; recog.continuous = true;
+  recog.onresult = e => {
+    let txt = '';
+    for (const res of e.results) txt += res[0].transcript + ' ';
+    $('explain').value = ($('explain').value + ' ' + txt).trim();
+  };
+  recog.onend = () => { recording = false; $('micBtn').textContent = '🎤 Speak instead'; $('micBtn').classList.remove('rec'); };
+  recog.onerror = () => { recording = false; $('micBtn').textContent = '🎤 Speak instead'; $('micBtn').classList.remove('rec'); };
+  recog.start(); recording = true;
+  $('micBtn').textContent = '⏹ Stop recording'; $('micBtn').classList.add('rec');
+};
+
+// ---- AI check ----
+$('checkBtn').onclick = async () => {
+  hideErr();
+  const key = keyInput.value.trim();
+  const topic = $('topic').value.trim();
+  const notes = $('notes').value.trim();
+  const explain = $('explain').value.trim();
+  // No key needed on the live site — the server hides it. A pasted key is only a fallback while testing locally.
+  if (!topic) { showErr('Please write your topic name.'); return; }
+  if (explain.length < 60) { showErr('Your explanation is too short. Explain a little more — at least 3-4 sentences in your own words.'); return; }
+  localStorage.setItem('tb_key', key);
+  const btn = $('checkBtn'); btn.disabled = true; btn.textContent = '⏳ Checking... the teacher is reading your answer';
+  const prompt = 'You are a kind but strict teacher checking a student\u2019s understanding using the Feynman Technique.\n' +
+    'TOPIC: ' + topic + '\n' +
+    (notes ? 'CORRECT CLASS NOTES (compare the student\u2019s explanation against these notes):\n' + notes.slice(0, 8000) + '\n' : 'No class notes were given — use your own correct knowledge of the topic.\n') +
+    'STUDENT\u2019S EXPLANATION (in their own words):\n' + explain.slice(0, 6000) + '\n\n' +
+    'Judge the explanation and reply with ONLY valid JSON in this exact format, no extra text:\n' +
+    '{"score": 0-100, "verdict": "2-3 friendly sentences summarising the result", "understood": ["points the student explained correctly"], "gaps": ["important points missing from the explanation"], "wrong": ["mistakes, each with the correct fact"], "followups": [{"q": "a question testing a gap", "a": "the correct short answer"}]}\n' +
+    'Rules: score honestly (a full, correct, complete explanation = 85-100; main idea only = 40-65; mostly wrong = below 40). Give 3-6 points in understood, 2-5 in gaps, and exactly 3 follow-up questions that target the gaps. Keep every point short and in simple English.';
+  try {
+    let res, data;
+    if (key) {
+      // Testing locally with your own key — direct call to Gemini.
+      res = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=' + encodeURIComponent(key), {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { temperature: 0.4 } })
+      });
+      data = await res.json();
+    } else {
+      // Live site — the key is hidden on the server (/api/check).
+      res = await fetch('/api/check', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt })
+      });
+      data = await res.json();
+      if (!res.ok && res.status === 501) throw new Error('Live key is not set up yet — paste your own free key above for now, or use the Demo.');
+    }
+    if (!res.ok) throw new Error((data.error && (data.error.message || data.error)) || 'API error');
+    let text = data.candidates[0].content.parts[0].text.replace(/```json/g, '').replace(/```/g, '').trim();
+    const parsed = JSON.parse(text);
+    if (typeof parsed.score !== 'number') throw new Error('The AI gave an unclear result. Please try again.');
+    renderResult(parsed, topic);
+    saveHistory(topic, parsed.score);
+  } catch (e) {
+    showErr('Something went wrong: ' + e.message + ' — check your API key and internet, then try again.');
+  }
+  btn.disabled = false; btn.textContent = '🔍 Check My Understanding';
+};
+</script>
+</body>
+</html>
