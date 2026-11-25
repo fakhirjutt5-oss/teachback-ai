@@ -4,6 +4,12 @@
 // environment variable called GEMINI_API_KEY (free tier, no card).
 // The browser calls POST /api/check with { prompt } and gets back the
 // same Gemini response the site already knows how to read.
+//
+// Model note (2026-11-25): gemini-2.0-flash was retired by Google, so
+// this function tries current models in order and uses the first one
+// that answers — a future retirement will not break the site again.
+
+const MODELS = ['gemini-3.8-flash', 'gemini-2.5-flash', 'gemini-2.5-flash-lite'];
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -22,23 +28,40 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Explanation missing or too long.' });
   }
 
+  let lastError = 'Gemini error.';
   try {
-    const gemini = await fetch(
-      'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=' +
-        encodeURIComponent(key),
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: { temperature: 0.4 },
-        }),
+    for (const model of MODELS) {
+      const gemini = await fetch(
+        'https://generativelanguage.googleapis.com/v1beta/models/' +
+          model +
+          ':generateContent?key=' +
+          encodeURIComponent(key),
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: { temperature: 0.4 },
+          }),
+        }
+      );
+      const data = await gemini.json();
+      if (gemini.ok) {
+        return res.status(200).json(data);
       }
-    );
-    const data = await gemini.json();
-    if (!gemini.ok) {
-      return res.status(502).json({ error: (data.error && data.error.message) || 'Gemini error.' });
+      lastError = (data.error && data.error.message) || 'Gemini error.';
+      const modelGone =
+        gemini.status === 404 ||
+        /no longer available|not found|not supported/i.test(lastError);
+      if (!modelGone) {
+        return res.status(502).json({ error: lastError });
+      }
     }
+    return res.status(502).json({ error: lastError });
+  } catch (e) {
+    return res.status(502).json({ error: 'Could not reach Gemini: ' + e.message });
+  }
+}
     return res.status(200).json(data);
   } catch (e) {
     return res.status(502).json({ error: 'Could not reach Gemini: ' + e.message });
