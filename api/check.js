@@ -50,9 +50,12 @@ export default async function handler(req, res) {
         return res.status(200).json(data);
       }
       lastError = (data.error && data.error.message) || 'Gemini error.';
+      // Only fall through to the next model when THIS model is gone;
+      // any other error (bad key, quota) is returned right away.
       const modelGone =
         gemini.status === 404 ||
-        /no longer available|not found|not supported/i.test(lastError);
+        gemini.status === 503 ||
+        /no longer available|not found|not supported|high demand|overloaded/i.test(lastError);
       if (!modelGone) {
         return res.status(502).json({ error: lastError });
       }
